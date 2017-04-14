@@ -2,7 +2,7 @@
 __author__="morganlnance"
 
 '''
-Give me two points( phi1, psi1 ) and ( phi2, psi2 ) and a number of steps to get between these points and this will print to screen the appropriate contents for a string_1.dat file of a linear interpolation between the given two points
+Give me two points( phi1, psi1 ) and ( phi2, psi2 ) and a number of steps to get between these points and this will print to screen a set of phi,psi steps to be written to a coords_<steps>steps.csv file
 
 Usage: python <script>.py phi1, psi1, phi2, psi2, steps
 Args:  python <script>.py float, float, float, float, int
@@ -69,7 +69,7 @@ phi_coords = [ round( phi1 + ( ii * phi_step ), 3 ) for ii in range( steps + 1 )
 psi_coords = [ round( psi1 + ( ii * psi_step ), 3 ) for ii in range( steps + 1) ]
 phi_psi_coords = zip( phi_coords, psi_coords )
 
-# keep phi,psi values within -180, 180
+print "phi,psi,step"
 for ii in range( steps + 1 ):
     phi = phi_psi_coords[ii][0]
     psi = phi_psi_coords[ii][1]
@@ -81,8 +81,4 @@ for ii in range( steps + 1 ):
         psi -= 360
     while psi < -180:
         psi += 360
-    # print to screen the appropriate lines
-    # for a string_1.dat file
-    print "# Image %s" %ii
-    print phi
-    print psi
+    print "%s,%s,%s" %( phi, psi, ii )
