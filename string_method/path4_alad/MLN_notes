@@ -1,0 +1,1 @@
+linear interpolation from min of basin1 to min of basin2 going the backwards route. So really it was basin1 79.5,-55.5 to basin2 202.5,-193.5 (from -157.7,166.6 where phi+360, psi-360)
