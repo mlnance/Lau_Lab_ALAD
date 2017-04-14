@@ -60,6 +60,9 @@ all_phi_psi_data = [ float( line.strip() ) # phi and psi
 # Image n
 phi
 psi
+# Image n+1
+phi
+psi
 '''
 # so phi comes first, then psi, then repeat
 phi_data = all_phi_psi_data[::2]
@@ -85,12 +88,15 @@ for ii in range( nimages - 2 ):
     # these are successive points
     # data format: ( phi, psi )
     # so point[0] = phi, point[1] = psi
+    # v = ( phi, psi )
     a = phi_psi_data[ii]
     b = phi_psi_data[ii+1]
     c = phi_psi_data[ii+2]
 
     # calculate two vectors focused on point b
     # a to b vector v1. c to b vector v2
+    # dx = phi2 - phi1
+    # dy = psi2 - psi1
     # vector = ( (phi2 - phi1), (psi2 - psi1) )
     # v1
     dx1 = (b[0] - a[0])
