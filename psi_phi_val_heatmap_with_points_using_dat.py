@@ -63,7 +63,6 @@ elif "pmf" in sys.argv[1]:
 else:
     title = "Val"
 
-
 # extract the three sets of data from the file
 # phi, psi, val (energy or count or something)
 data_dict = { "phi": [], "psi": [], "val": []}
