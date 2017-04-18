@@ -193,7 +193,9 @@ for ii in range( 1, nimages - 1 ):
     # normalize the push vector
     # u = v / |v|
     push_mag = vector_magnitude( push.vector )
-    unit_push = Vector( tuple( [ push.vector[jj] / push_mag 
+    # this multiplier is empirically chosen, for now it is a random choice
+    multiplier = 10
+    unit_push = Vector( tuple( [ multiplier * ( push.vector[jj] / push_mag )
                                  for jj in range( len( push.vector )) ] ))
     unit_push_vectors.append( unit_push )
 
