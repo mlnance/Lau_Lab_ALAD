@@ -63,7 +63,7 @@ def vector_magnitude( v ):
 
 class Vector:
     '''
-    Vector v is ( phi, psi ). Let's you hold the
+    Vector v is ( phi, psi ). Lets you hold the
     vector information in a more clear format
     '''
     def __init__( self, v ):
@@ -94,8 +94,11 @@ except IndexError:
 # read and store the image number phis
 # and psis from the string_cycle#.dat file
 try:
-    with open( string_file, 'r' ) as fh:
-        lines = fh.readlines()
+    # nucleus cluster runs on older python
+    # no with open statements allowed
+    fh = open( string_file, 'r' )
+    lines = fh.readlines()
+    fh.close()
 except IOError:
     print "\nI couldn't open your string_cycle#.dat file.\n" \
         "Is there something wrong with %s ?\n" %string_file
@@ -192,7 +195,6 @@ for ii in range( 1, nimages - 1 ):
     push_mag = vector_magnitude( push.vector )
     unit_push = Vector( tuple( [ push.vector[jj] / push_mag 
                                  for jj in range( len( push.vector )) ] ))
-    print unit_push.vector
     unit_push_vectors.append( unit_push )
 
 
@@ -243,6 +245,6 @@ for ii in range( len( pushed_phi_psi_data ) ):
     # pull out the image
     image = pushed_phi_psi_data[ii]
     # print the format for this image
-#    print "# Image %s\n%s\n%s" %( ii, 
-#                                  image.phi, 
-#                                  image.psi )
+    print "# Image %s\n%s\n%s" %( ii, 
+                                  image.phi, 
+                                  image.psi )
