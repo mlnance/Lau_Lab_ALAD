@@ -128,12 +128,6 @@ nimages = len( phi_psi_data )
 #########################
 # DETERMINE PUSH VECTOR #
 #########################
-# since we want some randomness in this algorithm
-# randomly decide which vector direction we will pick
-# there will be two directions for each normal vector
-# so pick the first or second direction calculated
-direction = choice( [ 0, 1 ] )
-
 # calculate vectors between sets of three points
 # skip the first and last point (start and stop)
 # start and stop points should never move
@@ -162,6 +156,17 @@ for ii in range( 1, nimages - 1 ):
     dphi2 = (c.phi - b.phi)
     dpsi2 = (c.psi - b.psi)
     v2 = Vector( ( dphi2, dpsi2 ) )
+
+    # since we want some randomness in this algorithm
+    # randomly decide which vector direction we will pick
+    # there will be two directions for each normal vector
+    # so pick the first or second direction calculated
+    # if a sufficient number of images are in the string,
+    # then the average "push" of the normal vectors sums
+    # to zero because about half will be up and half
+    # will be down. Meaning we don't affect our algorithm
+    # in a polar/directed manner. It is random and equal
+    direction = choice( [ 0, 1 ] )
 
     # calculate the normal to vectors v1 and v2
     # dx=phi2-phi1 and dy=phi2-psi1
