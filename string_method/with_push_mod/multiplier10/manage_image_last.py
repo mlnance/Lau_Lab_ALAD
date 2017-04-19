@@ -46,7 +46,7 @@ while 1:  # wait for string file to be written
     os.system('sleep 1s')
     break
   else:
-    os.system('sleep 5s')
+    os.system('sleep 10s')
 
 while 1: # Re-run if ABNORMAL termination
 
