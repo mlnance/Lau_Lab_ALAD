@@ -160,10 +160,20 @@ for dat_file in dat_filenames:
 color_idx = np.linspace(0, 1, len(keys))
 plots = []
 keys.sort()
-for key, ii in zip( keys, color_idx ):
-    plot = plt.scatter( x = dat_dict_phi[key], 
-                        y = dat_dict_psi[key], 
-                        s=6, color=plt.cm.Greys(ii), zorder=10, label=key )
+for ii, jj in zip( range( len( keys ) ), color_idx ):
+    key = keys[ii]
+    # if this is the last string_#.dat file
+    if ii == len( keys ) - 1:
+        plot = plt.scatter( x = dat_dict_phi[key], 
+                            y = dat_dict_psi[key], 
+                            s=14, marker='D', color="purple", 
+                            zorder=10, label=key )
+    # otherwise this is string 1 through nstrings - 1 
+    else:
+        plot = plt.scatter( x = dat_dict_phi[key], 
+                            y = dat_dict_psi[key], 
+                            s=10, marker='.', 
+                            color=plt.cm.Greys(jj), zorder=10, label=key )
 # http://stackoverflow.com/questions/4700614/how-to-put-the-legend-out-of-the-plot
 #plt.legend(loc='center left', bbox_to_anchor=(0.5, -0.05), 
 #           fancybox=True, shadow=True, ncol=len(keys) )
