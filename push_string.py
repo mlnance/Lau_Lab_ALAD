@@ -43,7 +43,7 @@ def simulated_annealing( cycle, period ):
     :param period: float( length of one period of simulated annealing curve )
     :return: float( amount of "push" to give to image )
     '''
-    # (1/2) * cos( 2*pi * cycle/period - pi ) + 1/2
+    # (1/2) * cos( 2*pi * (cycle/period) - pi ) + 1/2
     return 0.5 * cos((( 2 * pi ) * ( float( cycle ) / float( period ))) - pi ) + 0.5
 
 def angle_360( angle ):
@@ -246,7 +246,7 @@ for ii in range( 1, nimages - 1 ):
     # chosen with the intent to use 100 cycles
     period = 25
     # cycle depends on which cycle number the algorithm is on
-    # (1/2) * cos( 2*pi * cycle/period - pi ) + 1/2
+    # (1/2) * cos( 2*pi * (cycle/period) - pi ) + 1/2
     sim_anneal = simulated_annealing( cycle_num, period )
     # the multiplier is empirically chosen, for now it is a random choice
     # this is to ensure that the push is significant enough
