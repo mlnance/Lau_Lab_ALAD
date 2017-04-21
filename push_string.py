@@ -206,18 +206,18 @@ for ii in range( 1, nimages - 1 ):
     b = Vector( phi_psi_data[ii] )
     c = Vector( phi_psi_data[ii+1] )
 
-    # only for strings whose phi,psi cross barrier
-    '''
+    #####
+    ## only for strings whose phi,psi cross barrier
     # keep the phi,psi values of vectors a,b,c
     # between 0 and 360
     # this is to fix periodicity problems
-    a = Vector( ( angle_360( a.phi ),
-                  angle_360( a.psi ) ) )
-    b = Vector( ( angle_360( b.phi ),
-                  angle_360( b.psi ) ) )
-    c = Vector( ( angle_360( c.phi ),
-                  angle_360( c.psi ) ) )
-    '''
+    #a = Vector( ( angle_360( a.phi ),
+    #              angle_360( a.psi ) ) )
+    #b = Vector( ( angle_360( b.phi ),
+    #              angle_360( b.psi ) ) )
+    #c = Vector( ( angle_360( c.phi ),
+    #              angle_360( c.psi ) ) )
+    #####
 
     # calculate two vectors focused on point b
     # a to b vector v1. b to c vector v2
@@ -313,30 +313,29 @@ for ii, unit_push in zip( range( 1, nimages - 1 ),
     # grab the image to move along the unit_push vector
     point = Vector( phi_psi_data[ii] )
 
-    # only for strings whose phi,psi cross barrier
-    '''
+    #####
+    ## only for strings whose phi,psi cross barrier
     # our unit unit_push vectors were calculated for images
     # between phi,psi values of 0,360
     # so convert the image phi,psi to 0,360
     # this is to fix periodicity problems
-    point = Vector( ( angle_360( point.phi ),
-                      angle_360( point.psi ) ) )
-    '''
-
+    #point = Vector( ( angle_360( point.phi ),
+    #                  angle_360( point.psi ) ) )
+    #####
 
     # move the image according to its unit_push vector
     # add it component wise (phi1 + phi2, psi1 + psi2)
     pushed_point = Vector( ( point.phi + unit_push.phi, 
                              point.psi + unit_push.psi ) )
 
-    # only for strings whose phi,psi cross barrier
-    '''
+    #####
+    ## only for strings whose phi,psi cross barrier
     # now move the pushed point back between -180 and 180
     # phi,psi point was adjusted to 0,360 previously
     # this is to fix periodicity problems
-    pushed_point = Vector( ( angle_180( pushed_point.phi ),
-                             angle_180( pushed_point.psi ) ) )
-    '''
+    #pushed_point = Vector( ( angle_180( pushed_point.phi ),
+    #                         angle_180( pushed_point.psi ) ) )
+    #####
 
     # add pushed phi,psi point to the data list
     pushed_phi_psi_data.append( pushed_point )
