@@ -1,6 +1,6 @@
 #!/usr/bin/python
 __author__="morganlnance"
-print "test"
+
 '''
 Usage: python <script>.py string_cycle#.dat cycle_number
 
@@ -68,6 +68,26 @@ def angle_180( angle ):
         angle += 360
     return angle
         
+def image_distance( p1, p2 ):
+    '''
+    Determine the distance between two points
+    Points can have any number of components
+    ( phi, psi ), ( x, y, z ), etc
+    :param v1: list( or tuple( first point )
+    :param v2: list( or tuple( second point )
+    :return: float( distance )
+    '''
+    # ensure the points have the same number of components
+    if not len( v1 ) == len( v2 ):
+        return None
+
+    # sqrt( i sum n( ( v2i - v1i )**2 ) )
+    # with n components from i to n
+    return sqrt( 
+        sum( 
+            [ ( v2[ii] - v1[ii] )**2 
+              for ii in range( len( v1 )) ]))
+
 def vector_magnitude( v ):
     '''
     Get the magnitude of a vector tuple
@@ -157,6 +177,14 @@ phi_psi_data = zip( phi_data, psi_data )
 # the number of images is the number of
 # phi,psi tuples from the file
 nimages = len( phi_psi_data )
+
+
+
+###########################
+# DETERMINE MAX PUSH SIZE #
+###########################
+## max push size is determined by the average 
+## distance between successive phi,psi images
 
 
 
