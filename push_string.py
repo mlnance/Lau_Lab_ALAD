@@ -194,7 +194,8 @@ distances = [ image_distance( phi_psi_data[ii],
               for ii in range( nimages - 1 ) ]
 # calculate the average distance
 avg_img_dist = sum( distances ) / float( len( distances ) )
-# the average distance between the images is the max push size
+# the max_push is the average distance between the images
+# it will be adjusted later by the simulated annealing stage
 max_push = avg_img_dist
 
 
@@ -289,9 +290,14 @@ for ii in range( 1, nimages - 1 ):
     # cycle depends on which cycle number the algorithm is on
     # (1/2) * cos( 2*pi * (cycle/period) - pi ) + 1/2
     sim_anneal = simulated_annealing( cycle_num, period )
-    # the multiplier is empirically chosen, for now it is a random choice
+    # the multiplier is a factor of the max_push calculated earlier
+    # the simulated annealing function and the cycle_num
+    # sim_anneal can be between 0 and 1 given the function
+    # so the multiplier will be a factor of max_push times
+    # the 1 plus the sim_anneal value (so, now it's between 1 and 2)
+    # meaning the multiplier is either the max_push or twice max_push
     # this is to ensure that the push is significant enough
-    multiplier = max_push
+    multiplier = max_push * ( sim_anneal + 1 )
     # each component of the vector needs to be multiplied
     # hence using a list comprehension approach to isolate
     # each phi,psi component of the vector (like above normalization)
