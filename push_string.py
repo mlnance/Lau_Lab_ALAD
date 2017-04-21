@@ -93,9 +93,9 @@ def vector_magnitude( v ):
     Get the magnitude of a vector tuple
     :param v: tuple( phi, psi )
     '''
-    # sqrt( dx * dx + dy * dy )
+    # sqrt( dx**2 + dy**2 )
     return sqrt( 
-        sum( v[ii] * v[ii]
+        sum( v[ii]**2
              for ii in range( len( v ))))
 
 class Vector:
