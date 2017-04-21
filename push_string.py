@@ -73,20 +73,20 @@ def image_distance( p1, p2 ):
     Determine the distance between two points
     Points can have any number of components
     ( phi, psi ), ( x, y, z ), etc
-    :param v1: list( or tuple( first point )
-    :param v2: list( or tuple( second point )
+    :param p1: list( or tuple( first point )
+    :param p2: list( or tuple( second point )
     :return: float( distance )
     '''
     # ensure the points have the same number of components
-    if not len( v1 ) == len( v2 ):
+    if not len( p1 ) == len( p2 ):
         return None
 
-    # sqrt( i sum n( ( v2i - v1i )**2 ) )
+    # sqrt( i sum n( ( p2i - p1i )**2 ) )
     # with n components from i to n
     return sqrt( 
         sum( 
-            [ ( v2[ii] - v1[ii] )**2 
-              for ii in range( len( v1 )) ]))
+            [ ( p2[ii] - p1[ii] )**2 
+              for ii in range( len( p1 )) ]))
 
 def vector_magnitude( v ):
     '''
@@ -185,6 +185,17 @@ nimages = len( phi_psi_data )
 ###########################
 ## max push size is determined by the average 
 ## distance between successive phi,psi images
+# collect the distances between each point of the string
+# if there are nimages, there are nimages - 1 lines
+# connecting each image together (ie distances to calculate)
+# start with one point and get distance to the next point
+distances = [ image_distance( phi_psi_data[ii], 
+                              phi_psi_data[ii+1] ) 
+              for ii in range( nimages - 1 ) ]
+# calculate the average distance
+avg_img_dist = sum( distances ) / float( len( distances ) )
+# the average distance between the images is the max push size
+max_push = avg_img_dist
 
 
 
@@ -280,7 +291,7 @@ for ii in range( 1, nimages - 1 ):
     sim_anneal = simulated_annealing( cycle_num, period )
     # the multiplier is empirically chosen, for now it is a random choice
     # this is to ensure that the push is significant enough
-    multiplier = 20.0
+    multiplier = max_push
     # each component of the vector needs to be multiplied
     # hence using a list comprehension approach to isolate
     # each phi,psi component of the vector (like above normalization)
