@@ -195,7 +195,7 @@ for ii in range( 1, nimages - 1 ):
     # a to b vector v1. b to c vector v2
     # dx = phi2 - phi1
     # dy = psi2 - psi1
-    # vector = ( (phi2 - phi1), (psi2 - psi1) )
+    # vector = ( dx, dy )
     # v1
     dphi1 = (b.phi - a.phi)
     dpsi1 = (b.psi - a.psi)
@@ -217,18 +217,20 @@ for ii in range( 1, nimages - 1 ):
     direction = choice( [ 0, 1 ] )
 
     # calculate the normal to vectors v1 and v2
-    # dx=phi2-phi1 and dy=phi2-psi1
+    # since dx=phi2-phi1 and dy=psi2-psi1
     # then the normals are (-dy, dx) and (dy, -dx)
-    # select the vector by using the predetermined direction
+    # select the vector by using a randomly-selected direction
+    # both normals should point in the same direction
+    # otherwise they cancel each other out
     n1 = Vector( [ ( -dpsi1, dphi1 ), 
                    ( dpsi1, -dphi1 ) ][ direction ] )
     n2 = Vector( [ ( -dpsi2, dphi2 ), 
                    ( dpsi2, -dphi2 ) ][ direction ] )
 
-    # add the normal vectors together to get the push
-    # vector (it should be somewhere between the two vectors)
+    # add the normal vectors together to get the push vector
+    # (it should be somewhere in between the two vectors)
     # add vectors component-wise
-    # push = < n1.phi + n2.phi, n1.psi + n1.phi >
+    # push = ( n1.phi + n2.phi, n1.psi + n1.phi )
     push = Vector( ( n1.phi + n2.phi, 
                      n1.psi + n2.psi ) )
 
@@ -236,7 +238,7 @@ for ii in range( 1, nimages - 1 ):
     ## then adjust the unit vector in a simulated annealing approach
     # determine the magnitude of the push vector
     push_mag = vector_magnitude( push.vector )
-    # unit_push = ( phi, psi )
+    # unit_push = ( phi, psi ) from u = v / |v|
     unit_push = Vector( tuple( 
             [ push.vector[jj] / push_mag
               for jj in range( len( push.vector )) ] ))
@@ -250,10 +252,16 @@ for ii in range( 1, nimages - 1 ):
     sim_anneal = simulated_annealing( cycle_num, period )
     # the multiplier is empirically chosen, for now it is a random choice
     # this is to ensure that the push is significant enough
-    multiplier = 10.0
+    multiplier = 20.0
     # each component of the vector needs to be multiplied
     # hence using a list comprehension approach to isolate
     # each phi,psi component of the vector (like above normalization)
+    # when sim_anneal = 0, there is no push. You are at the
+    # bottom of the simulated annealing cosine curve
+    # when sim_anneal = max, there is max push. You are at the 
+    # top of the simulated annealing cosine curve
+    # the simulated annealing function is a periodic one
+    # with multiple mins and maxs and heating and cooling cycles
     unit_push = Vector( tuple( 
             [ unit_push.vector[jj] * sim_anneal * multiplier 
               for jj in range( len( unit_push.vector ) ) ] ) )
@@ -271,14 +279,15 @@ pushed_phi_psi_data = []
 pushed_phi_psi_data.append( Vector( phi_psi_data[0] ) )
 # now that unit_push_vectors have been collected
 # move each phi,psi image along its unit_push vector
-for ii, push in zip( range( 1, nimages - 1 ), 
+# there is either no push, max push, or in between
+for ii, unit_push in zip( range( 1, nimages - 1 ), 
                      unit_push_vectors ):
-    # grab the image to move along the push vector
+    # grab the image to move along the unit_push vector
     point = Vector( phi_psi_data[ii] )
 
     # only for strings whose phi,psi cross barrier
     '''
-    # our unit push vectors were calculated for images
+    # our unit unit_push vectors were calculated for images
     # between phi,psi values of 0,360
     # so convert the image phi,psi to 0,360
     # this is to fix periodicity problems
@@ -287,10 +296,10 @@ for ii, push in zip( range( 1, nimages - 1 ),
     '''
 
 
-    # move the image according to its push vector
+    # move the image according to its unit_push vector
     # add it component wise (phi1 + phi2, psi1 + psi2)
-    pushed_point = Vector( ( point.phi + push.phi, 
-                             point.psi + push.psi ) )
+    pushed_point = Vector( ( point.phi + unit_push.phi, 
+                             point.psi + unit_push.psi ) )
 
     # only for strings whose phi,psi cross barrier
     '''
@@ -301,7 +310,7 @@ for ii, push in zip( range( 1, nimages - 1 ),
                              angle_180( pushed_point.psi ) ) )
     '''
 
-    # add pushed phi,psi point to a list
+    # add pushed phi,psi point to the data list
     pushed_phi_psi_data.append( pushed_point )
 # add the last point (which is unmoved) to the list
 pushed_phi_psi_data.append( Vector( phi_psi_data[-1] ) )
