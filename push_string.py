@@ -1,6 +1,6 @@
 #!/usr/bin/python
 __author__="morganlnance"
-
+print "test"
 '''
 Usage: python <script>.py string_cycle#.dat cycle_number
 
