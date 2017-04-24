@@ -86,12 +86,39 @@ if is_dir is True:
 if is_dir is False:
     dat_filenames = [ dat_path ]
 
+
+#################
+# DAT FILENAMES #
+#################
+## make a dictionary of the dat_filenames as to plot
+## each dat file in order
+# file the dictionary where the key is the dat string number
+# and the value is the corresponding path to that file
+dat_dict = {}
+for dat_file in dat_filenames:
+    # get the dat string number which will serve as a key
+    # strip each dat_path on '/' and "string_" to get the 
+    key = int( dat_file.split('/')[-1].split(".dat")[0].split('_')[-1] )
+    dat_dict[ key ] = dat_file
+# get the keys for this dat_dict and sort them
+# this is so you plot from string_1 to string_n
+keys = dat_dict.keys()
+keys.sort()
+
+
+############
+# PLOTTING #
+############
+## plot the E vs image number for each string
+## plot each string in order from 1 to n
 # round the phi,psi coordinates to the nearest value
 # that is found in the input pmf file
 # this will be the best estimate
 color_idx = np.linspace(0, 1, len(dat_filenames))
 max_energy = None
-for dat_file, ii in zip( dat_filenames, color_idx ):
+for dat_key, ii in zip( keys, color_idx ):
+    # dat_dict[ string_number ] = /path/to/that/string file
+    dat_file = dat_dict[dat_key]
     # open and read the data from the string_<>.dat file
     with open( dat_file, 'r' ) as fh:
         dat_data = fh.readlines()
@@ -119,8 +146,12 @@ for dat_file, ii in zip( dat_filenames, color_idx ):
                 min_diff = diff
                 energy = pmf_data_dict[ pmf_pp ]
                 close_match = pmf_pp
+        # the energy associated with this dat file phi,psi
+        # has been found using the closest match phi,psi
+        # pair in the umbrella sampling pmf file
         energies.append( energy )
-        # for y-lim in plot
+        # collect the max_energy out of each image seen
+        # as to set a proper y-lim on the plot
         if max_energy is None or energy > max_energy:
             max_energy = energy
 
@@ -134,6 +165,7 @@ for dat_file, ii in zip( dat_filenames, color_idx ):
     plt.scatter( x=range( len( energies ) ), 
                  y=energies, 
                  color=plt.cm.rainbow(ii) )
+
 
 # finish the plot
 plt.xlim( [ 0, len( dat_phi_psi ) ] )
