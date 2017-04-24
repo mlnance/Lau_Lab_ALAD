@@ -171,6 +171,6 @@ for dat_key, ii in zip( keys, color_idx ):
 plt.xlim( [ 0, len( dat_phi_psi ) ] )
 plt.xlabel( "Image Number" )
 plt.ylim( [ 0, round( max_energy ) + 1 ] )
-plt.ylabel( "(Phi,Psi) Energy" )
+plt.ylabel( "Sum(Phi,Psi) Energy" )
 plt.title( "String %s" %string_num )
 plt.show(block=False)
