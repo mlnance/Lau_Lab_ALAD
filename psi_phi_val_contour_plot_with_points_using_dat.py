@@ -166,18 +166,54 @@ for dat_file in dat_filenames:
         # a bit too fancy of a way to do it
         #dat_dict[ key ] = [ [x,y] for x, y in zip( phi_psi_coords[::2], phi_psi_coords[1::2] ) ]
 
-
-# plot the points
+# sort the keys to plot dat files in order so that
+# the last dat file plotted is actually the last string
+keys.sort()
+## plot the dat files depending on how many there are
+## and, if more than one, if it's the last dat file
 # x is phi, which is the first set
 # y is psi, which is the second set
-# figure out colors too
-color_idx = np.linspace(0, 1, len(keys))
-plots = []
-keys.sort()
-for key, ii in zip( keys, color_idx ):
-    plot = plt.scatter( x = dat_dict_phi[key], 
-                        y = dat_dict_psi[key], 
-                        s=6, color=plt.cm.Greys(ii), zorder=10, label=key )
+# if there is only one single dat file to plot, 
+# color each scatter point differently
+if len( keys ) == 1:
+    # store the key and get the number of points along
+    # this particular string in the dat file
+    key = keys[0]
+    num_points = len( dat_dict_phi[key] )
+    # each point on the single string has a different color
+    color_idx = np.linspace(0, 1, num_points)
+    for ii, jj in zip( range( num_points ), color_idx ):
+        x = dat_dict_phi[key][ii]
+        y = dat_dict_psi[key][ii]
+        plt.scatter( x=x, y=y, 
+                     s=14, marker='D', zorder=10, 
+                     color=plt.cm.Greys(jj), label=key )
+        # if you want each scatter point to have its
+        # associated point number
+        # works because the dat_dicts were filled in
+        # image order from the dat phi,psi file
+        #plt.annotate( ii, (x, y), color="white", size=8 )
+# otherwise, if there are two or more dat files to plot
+# plot so that each dat file string is a different color
+else:
+    # each dat file string plotted has a different color
+    color_idx = np.linspace(0, 1, len(keys))
+    for ii, jj in zip( range( len( keys ) ), color_idx ):
+        key = keys[ii]
+        # if this is the last string_#.dat file
+        # give it a biger marker and a different color
+        if ii == len( keys ) - 1:
+            plt.scatter( x = dat_dict_phi[key], 
+                         y = dat_dict_psi[key], 
+                         s=14, marker='D', color="purple", 
+                         zorder=10, label=key )
+        # otherwise this is string 1 through nstrings - 1
+        # give it a color along the chosen spectrum
+        else:
+            plt.scatter( x = dat_dict_phi[key], 
+                         y = dat_dict_psi[key], 
+                         s=10, marker='.', 
+                         color=plt.cm.Greys(jj), zorder=10, label=key )
 # http://stackoverflow.com/questions/4700614/how-to-put-the-legend-out-of-the-plot
 #plt.legend(loc='center left', bbox_to_anchor=(0.5, -0.05), 
 #           fancybox=True, shadow=True, ncol=len(keys) )
