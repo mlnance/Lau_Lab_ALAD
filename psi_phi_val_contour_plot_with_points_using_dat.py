@@ -205,8 +205,10 @@ else:
         if ii == len( keys ) - 1:
             plt.scatter( x = dat_dict_phi[key], 
                          y = dat_dict_psi[key], 
-                         s=14, marker='D', color="purple", 
-                         zorder=10, label=key )
+                         s=10, marker='.', 
+                         color=plt.cm.Greys(jj), zorder=10, label=key )
+#                         s=14, marker='D', color="purple", 
+#                         zorder=10, label=key )
         # otherwise this is string 1 through nstrings - 1
         # give it a color along the chosen spectrum
         else:
