@@ -109,12 +109,12 @@ nimages = len( string_phi_psi )
 ## keeping track of nearest neighbors to images
 # iterate through each image number in the string
 # nn means nearest neighbor
-# nn_dict will contain each image number
-# as the key, and its value will be a list of
-# its two nearest neighbors
-# ex) nn_dict[ 4 ] = [ 3, 5 ]
-nn_dict = {}
-for ii in range( nimages ):
+# nn_list starts from the first image (0)
+# and grows until nimages-1 in increasing order
+# depending on which images are nearest neighbors
+nn_list = [ 0 ]
+ii = 0
+while ii != ( nimages - 1 ):
     # pull out the phi,psi tuple for that image number
     ii_phi_psi = string_phi_psi[ ii ]
 
@@ -137,8 +137,28 @@ for ii in range( nimages ):
     # from distances will give the same indices needed to
     # pull out the corresponding image numbers that are the
     # nearest neighbor images to image ii
-    nn = [ image_numbers[ jj ]
-           for jj in np.argsort( distances )[0:5] ]
+    neighbors = [ image_numbers[ jj ]
+                  for jj in np.argsort( distances ) ]
 
-    # store this nearest neighbor (nn) info in the dictionary
-    nn_dict[ ii ] = nn
+    # find the nearest neighbor to current image ii
+    # only if it is a larger number than ii
+    # once we find our next image, we update ii
+    # and move to finding the next nearest neighbor
+    # that increases in image number up until we
+    # get to image number nimages-1
+    for nn in neighbors:
+        if nn > ii:
+            ii = nn
+            break
+
+    # add this nearest neighbor to the list
+    # this is our new, growing string
+    nn_list.append( nn )
+
+# write out the new string
+# string_phi_psi = ( phi, psi )
+# so phi is the first element and psi is the second
+for ii in range( len( nn_list ) ):
+    print "# Image %s\n%s\n%s" %( ii,
+                                  string_phi_psi[ii][0], 
+                                  string_phi_psi[ii][1] )
