@@ -158,7 +158,7 @@ while ii != ( nimages - 1 ):
 # write out the new string
 # string_phi_psi = ( phi, psi )
 # so phi is the first element and psi is the second
-for ii in range( len( nn_list ) ):
+for img, ii in zip( nn_list, range( len( nn_list ) )):
     print "# Image %s\n%s\n%s" %( ii,
-                                  string_phi_psi[ii][0], 
-                                  string_phi_psi[ii][1] )
+                                  string_phi_psi[img][0], 
+                                  string_phi_psi[img][1] )
