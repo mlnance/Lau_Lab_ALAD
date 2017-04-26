@@ -8,7 +8,7 @@ Usage:
 Take each image along a string, in sequence
 Calculate the distance between each image
 Ex) distance of 2 from 1 and 3, 5 from 4 and 6
-Determine each image's nearest neighbors
+Determine each images nearest neighbors
 Is image 4 closest to 3 and 5?
 Or is it closest to 3 and 9?
 If the latter is true, there is a knot
