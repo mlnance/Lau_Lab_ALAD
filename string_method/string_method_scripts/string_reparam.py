@@ -48,17 +48,21 @@ for line in string:
     pts[count] = float(line)
     count += 1
 
-pts.resize(nimg, nvar)
+nimg_old = count / nvar
+pts.resize(nimg_old, nvar)
+# we now may have cases where we are getting strings that
+# are smaller than the number of images we told it we want
+#pts.resize(nimg, nvar)
 
 #print pts
 
 ## ------------------ Compute Gradient/String Length --------------- ##
 
-slength = np.zeros(nimg)                  # String Length
-grad = np.zeros((nimg-1, nvar))           # FD between img (n+1, n)
+slength = np.zeros(nimg_old)                  # String Length
+grad = np.zeros((nimg_old-1, nvar))           # FD between img (n+1, n)
 
 # Projection parameters
-for i in range(nimg-1):
+for i in range(nimg_old-1):
 
 #  diff_v = pts[i + 1, :] - pts[i,:]
   diff_v = np.zeros(nvar)
@@ -79,7 +83,12 @@ for i in range(nimg-1):
 ## -------------------- Reparametrize the string ------------------- ##
 
 img_dist   = slength[-1] / float(nimg - 1)
-new_string = np.copy(pts)
+new_string = np.zeros(nimg * nvar)
+new_string.resize( nimg, nvar )
+# the new string is now not a copy of the old string
+# because we may want more images than we started with
+# so we need to create a fresh new_string variable
+#new_string = np.copy(pts)
 
 #print "Gradient"
 #print grad
@@ -93,10 +102,14 @@ for i in range(nimg):
   
   # First and last points, Project 0 distance.
   #   Careful - Floating Point rounding errors
-  if tot_dist == 0 or round(tot_dist, 5) == round(slength[-1], 5):
-
+  if tot_dist == 0:
+    # first point
     start_pt = pts[i,:]
     new_pt = start_pt                       
+  elif round(tot_dist, 5) == round(slength[-1], 5):
+    # last point
+    start_pt = pts[-1,:]
+    new_pt = start_pt
 
 #    print tot_dist
 #    print 'ITER = %s' %i
