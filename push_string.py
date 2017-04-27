@@ -2,7 +2,10 @@
 __author__="morganlnance"
 
 '''
-Usage: python <script>.py string_cycle#.dat cycle_number
+Usage: python <script>.py string_cycle#.dat nvars cycle_number
+Arguments: string_cycle#.dat (/path/to/the string.dat file)
+           nvars             (the number of variables defining one image)
+           cycle_number      (the number of the current cycle of the algorithm)
 
 Using a string_<>.dat file, calculate the normal vector using three points.
 Points a, b, c
@@ -78,16 +81,6 @@ def vector_magnitude( v ):
         sum( v[ii]**2
              for ii in range( len( v ))))
 
-class Vector:
-    '''
-    Vector v is ( phi, psi ). Lets you hold the
-    vector information in a more clear format
-    '''
-    def __init__( self, v ):
-        self.phi = v[0]
-        self.psi = v[1]
-        self.vector = v
-
 
 
 ####################
@@ -104,12 +97,26 @@ try:
 except IndexError:
     print "\nI need a string_cycle#.dat file.\n"
     sys.exit()
-# read-in and check cycle_number argument
+# read-in and check nvars argument
 try:
-    cycle_num = sys.argv[2]
+    nvars = sys.argv[2]
     # ensure it is a number
     try:
-        cycle_num = float( cycle_num )
+        nvars = int(float( nvars ))
+    # if not a number
+    except ValueError:
+        print "\nYou did not give me a number as your nvars argument.\n"
+        sys.exit()
+# if no nvars was given
+except IndexError:
+    print "\nYou did not give me an nvars argument.\n"
+    sys.exit()
+# read-in and check cycle_number argument
+try:
+    cycle_num = sys.argv[3]
+    # ensure it is a number
+    try:
+        cycle_num = int(float( cycle_num ))
     # if not a number
     except ValueError:
         print "\nYou did not give me a number as your cycle_number argument.\n"
@@ -149,14 +156,34 @@ psi
 phi
 psi
 '''
-# so phi comes first, then psi, then repeat
-# and lines starting with '#' were skipped
-phi_data = all_phi_psi_data[::2]
-psi_data = all_phi_psi_data[1::2]
-phi_psi_data = zip( phi_data, psi_data )
+# each image is described by nvars variables
+# so each variable associated with each image
+# is repeated in a predictable manner
+# ex) alad project described by phi,psi
+# where phi came first then psi after each
+# '# Image n' line
+# so loop over the data according to how
+# many variables describe the data (nvars)
+all_data = []
+for ii in range( nvars ):
+    # each var that describes the image repeats in
+    # a predictable manner
+    # so by sorting through all the info from the dat
+    # file in a way that parses through it in repeating
+    # chunks means that all variables can be pulled out
+    # in their corresponding manner
+    # reminder: list[start_at:end_before:skip]
+    # so start_at should iterate from 0 to nvars
+    # and nvars should be skipped each time
+    all_data.append( all_phi_psi_data[ii::nvars] )
+# unpack and organize the data appropriately
+# each tuple in the data list are the variables associated
+# with that particular image number (by index)
+data = zip( *all_data )
+
 # the number of images is the number of
-# phi,psi tuples from the file
-nimages = len( phi_psi_data )
+# data point tuples from the file
+nimages = len( data )
 
 
 
@@ -171,14 +198,14 @@ unit_push_vectors = []
 for ii in range( 1, nimages - 1 ):
     # get points a, b, and c
     # these are successive points
-    # data format: ( phi, psi )
-    # so point[0] = phi, point[1] = psi
-    # v = ( phi, psi )
-    a = Vector( phi_psi_data[ii-1] )
-    b = Vector( phi_psi_data[ii] )
-    c = Vector( phi_psi_data[ii+1] )
+    # data format: ( var1, var2, var3, ..., var_nvars )
+    # v = ( var1, var2, ... )
+    a = data[ii-1]
+    b = data[ii]
+    c = data[ii+1]
 
     #####
+    ## NOT ADJUSTED FOR USING NVARS ARGUMENT
     ## only for strings whose phi,psi cross barrier
     # keep the phi,psi values of vectors a,b,c
     # between 0 and 360
