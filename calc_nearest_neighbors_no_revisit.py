@@ -12,7 +12,7 @@ Calculate the distance between ii and every other image
 in the string that is not the same as image ii
 Ex) image 1 to image 0, 2, 3, 4, ..., n
 Rank images in terms of how close they are to image ii
-( this is determining image ii's nearest neighbors )
+( this is determining image iis nearest neighbors )
 If image ii is closest to another image that is not ii+1
 or ii-1, then there is likely a knot
 Iterate through each image number (starting at 0) and
