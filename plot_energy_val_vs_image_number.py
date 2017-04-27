@@ -106,9 +106,9 @@ keys = dat_dict.keys()
 keys.sort()
 
 
-############
-# PLOTTING #
-############
+########################
+# COMPARE DAT E vs PMF #
+########################
 ## plot the E vs image number for each string
 ## plot each string in order from 1 to n
 # round the phi,psi coordinates to the nearest value
@@ -116,6 +116,14 @@ keys.sort()
 # this will be the best estimate
 color_idx = np.linspace(0, 1, len(dat_filenames))
 max_energy = None
+# holds the energy of the string per string number
+energy_of_string_dict = {}
+# also keep track of the key corresponding to the
+# string number of the lowest total energy
+lowest_string_E = None
+lowest_string_E_key = None
+# for each dat key (should be 1 through n, 
+# it was sorted above )
 for dat_key, ii in zip( keys, color_idx ):
     # dat_dict[ string_number ] = /path/to/that/string file
     dat_file = dat_dict[dat_key]
@@ -130,6 +138,7 @@ for dat_key, ii in zip( keys, color_idx ):
     # compare all phi,psi for each dat file
     # to the phi,psi combos from the pmf file
     energies = []
+    # for every phi,psi image of this string
     for phi_psi in dat_phi_psi:
         # initiate holders for this round
         min_diff = None
@@ -155,6 +164,19 @@ for dat_key, ii in zip( keys, color_idx ):
         if max_energy is None or energy > max_energy:
             max_energy = energy
 
+    # store the sum of the energies of each image (ie
+    # the energy of this string) in the energy_of_string_dict
+    string_E = sum( energies )
+    energy_of_string_dict[ dat_key ] = string_E
+    # compare this string's energy to the lowest E seen
+    # or fill the data holders if this is the first string
+    if lowest_string_E is None or string_E < lowest_string_E:
+        lowest_string_E = string_E
+        lowest_string_E_key = dat_key
+
+    ########
+    # PLOT #
+    ########
     # now that all energies for each phi,psi in
     # all the images associated with this string_<>.dat file
     # are collected, plot the data
@@ -167,6 +189,9 @@ for dat_key, ii in zip( keys, color_idx ):
                  color=plt.cm.rainbow(ii) )
 
 
+###############
+# FINISH PLOT #
+###############
 # finish the plot
 plt.xlim( [ 0, len( dat_phi_psi ) ] )
 plt.xlabel( "Image Number" )
