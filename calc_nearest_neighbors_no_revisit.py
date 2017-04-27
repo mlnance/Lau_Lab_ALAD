@@ -3,23 +3,27 @@ __author__="morganlnance"
 
 
 '''
-Usage:
+NOT AS OPTIMIZED OF A SOLUTION TO THE NEAREST-NEIBHOR, KNOT-FIXING PROBLEM
 
-Take each image along a string, in sequence
-Calculate the distance between each image
-Ex) distance of 2 from 1 and 3, 5 from 4 and 6
-Determine each image's nearest neighbors
-Is image 4 closest to 3 and 5?
-Or is it closest to 3 and 9?
-If the latter is true, there is a knot
-Then connect each image in terms of its nearest neighbors
-If a knot is present, connect that image to its highest
-nearest neighbor image number
-This is how image numbers will be taken out of a string
+Usage: python <script.py> /path/to/string_<>.dat
 
-Case for start and stop points:
-Start needs to be closest to start+1 and start+2
-Stop needs to be closest to stop-1 and stop-2
+Take each image ii along a string, in sequence
+Calculate the distance between ii and every other image
+in the string that is not the same as image ii
+Ex) image 1 to image 0, 2, 3, 4, ..., n
+Rank images in terms of how close they are to image ii
+( this is determining image ii's nearest neighbors )
+If image ii is closest to another image that is not ii+1
+or ii-1, then there is likely a knot
+Iterate through each image number (starting at 0) and
+connect these images in order in terms of their nearest
+neighbors AND if this nearest neighbor has not been seen before
+( this method allows images to connect in an order that does
+not necessarily have to be increasing order )
+This is how image numbers will be taken out of a string, if
+it is necessary, and how to remove knots
+Move through each image number until string start (image 0)
+is connected to the string end (image n)
 '''
 
 
@@ -109,12 +113,12 @@ nimages = len( string_phi_psi )
 ## keeping track of nearest neighbors to images
 # iterate through each image number in the string
 # nn means nearest neighbor
-# nn_dict will contain each image number
-# as the key, and its value will be a list of
-# its two nearest neighbors
-# ex) nn_dict[ 4 ] = [ 3, 5 ]
-nn_dict = {}
-for ii in range( nimages ):
+# nn_list starts from the first image (0)
+# and grows until nimages-1 in increasing order
+# depending on which images are nearest neighbors
+nn_list = [ 0 ]
+ii = 0
+while ii != ( nimages - 1 ):
     # pull out the phi,psi tuple for that image number
     ii_phi_psi = string_phi_psi[ ii ]
 
@@ -137,8 +141,30 @@ for ii in range( nimages ):
     # from distances will give the same indices needed to
     # pull out the corresponding image numbers that are the
     # nearest neighbor images to image ii
-    nn = [ image_numbers[ jj ]
-           for jj in np.argsort( distances )[0:5] ]
+    neighbors = [ image_numbers[ jj ]
+                  for jj in np.argsort( distances ) ]
 
-    # store this nearest neighbor (nn) info in the dictionary
-    nn_dict[ ii ] = nn
+    # find the nearest neighbor to current image ii
+    # only if it is an image that has not been used before
+    # once we find our next image, we update ii
+    # and move to finding the next nearest neighbor
+    # until we get the image number nimages-1
+    for nn in neighbors:
+        if nn not in nn_list:
+            # add this nearest neighbor to the list
+            # this is our new, growing string
+            nn_list.append( nn )
+
+            # update our new starting image to find
+            # the next nearest neighbor
+            ii = nn
+            break
+
+
+# write out the new string
+# string_phi_psi = ( phi, psi )
+# so phi is the first element and psi is the second
+for img, ii in zip( nn_list, range( len( nn_list ) )):
+    print "# Image %s\n%s\n%s" %( ii,
+                                  string_phi_psi[img][0], 
+                                  string_phi_psi[img][1] )

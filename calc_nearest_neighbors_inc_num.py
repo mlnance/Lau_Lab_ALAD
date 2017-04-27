@@ -3,23 +3,24 @@ __author__="morganlnance"
 
 
 '''
-Usage:
+Usage: python <script.py> /path/to/string_<>.dat
 
-Take each image along a string, in sequence
-Calculate the distance between each image
-Ex) distance of 2 from 1 and 3, 5 from 4 and 6
-Determine each images nearest neighbors
-Is image 4 closest to 3 and 5?
-Or is it closest to 3 and 9?
-If the latter is true, there is a knot
-Then connect each image in terms of its nearest neighbors
-If a knot is present, connect that image to its highest
-nearest neighbor image number
+Take each image ii along a string, in sequence
+Calculate the distance between ii and every other image
+in the string that is not the same as image ii
+Ex) image 1 to image 0, 2, 3, 4, ..., n
+Rank images in terms of how close they are to image ii
+( this is determining image ii's nearest neighbors )
+If image ii is closest to another image that is not ii+1
+or ii-1, then there is likely a knot
+Iterate through each image number (starting at 0) and
+connect these images in order in terms of their nearest 
+neighbors AND if the nearest neighbor image is larger
+in value (higher image number) than iamge ii
 This is how image numbers will be taken out of a string
-
-Case for start and stop points:
-Start needs to be closest to start+1 and start+2
-Stop needs to be closest to stop-1 and stop-2
+and how to remove knots
+Move through each image number until string start (image 0)
+is connected to the string end (image n)
 '''
 
 
