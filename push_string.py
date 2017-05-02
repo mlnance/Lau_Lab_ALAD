@@ -71,12 +71,27 @@ def angle_180( angle ):
         angle += 360
     return angle
         
+def vector_difference( v1, v2 ):
+    '''
+    Get the difference between vector v1 and vector v2
+    :param v1: tuple( 1p1, 1p2, ..., 1pn )
+    :param v2: tuple( 2p1, 2p2, ..., 2pn )
+    :return: tuple( 2p1 - 1p1, 2p2 - 1p2, ... )
+    '''
+    # ensure the vectors have the same number of points
+    if not len( v1 ) == len( v2 ):
+        print "\nThe vectors you gave me for calculating distance do not have the same number of points.\n"
+        sys.exit()
+    # calculate distance
+    v_len = len( v1 )
+    return tuple( [ v2[ii] - v1[ii] for ii in range( v_len ) ] )
+
 def vector_magnitude( v ):
     '''
     Get the magnitude of a vector tuple
-    :param v: tuple( phi, psi )
+    :param v: tuple( p1, p2, ..., pn )
+    :return: float( magnitude )
     '''
-    # sqrt( dx**2 + dy**2 )
     return sqrt( 
         sum( v[ii]**2
              for ii in range( len( v ))))
@@ -128,11 +143,11 @@ except IndexError:
 
 
 
-##########################
-# COLLECT IMAGES PHI,PSI #
-##########################
-# read and store the image number phis
-# and psis from the string_cycle#.dat file
+#######################
+# COLLECT IMAGES VARS #
+#######################
+# read and store the image number vars
+# from the string_cycle#.dat file
 try:
     # nucleus cluster runs on older python
     # no with open statements allowed
@@ -143,7 +158,7 @@ except IOError:
     print "\nI couldn't open your string_cycle#.dat file.\n" \
         "Is there something wrong with %s ?\n" %string_file
     sys.exit()
-# parse the file, storing phi,psi info
+# parse the file, storing vars info
 all_phi_psi_data = [ float( line.strip() ) # phi and psi
                      for line in lines
                      if not line.startswith( '#' ) ] # if not '# Image n'
@@ -152,16 +167,22 @@ all_phi_psi_data = [ float( line.strip() ) # phi and psi
 # Image n
 phi
 psi
+dist
+length
+...
 # Image n+1
 phi
 psi
+dist
+length
+...
 '''
-# each image is described by nvars variables
-# so each variable associated with each image
-# is repeated in a predictable manner
-# ex) alad project described by phi,psi
-# where phi came first then psi after each
-# '# Image n' line
+## each image is described by nvars variables
+## so each variable associated with each image
+## is repeated in a predictable manner
+## ex) alad project described by phi,psi
+## where phi came first then psi after each
+## '# Image n' line
 # so loop over the data according to how
 # many variables describe the data (nvars)
 all_data = []
@@ -219,18 +240,9 @@ for ii in range( 1, nimages - 1 ):
     #####
 
     # calculate two vectors focused on point b
-    # a to b vector v1. b to c vector v2
-    # dx = phi2 - phi1
-    # dy = psi2 - psi1
-    # vector = ( dx, dy )
-    # v1
-    dphi1 = (b.phi - a.phi)
-    dpsi1 = (b.psi - a.psi)
-    v1 = Vector( ( dphi1, dpsi1 ) )
-    # v2
-    dphi2 = (c.phi - b.phi)
-    dpsi2 = (c.psi - b.psi)
-    v2 = Vector( ( dphi2, dpsi2 ) )
+    # each vector has nvars points to it
+    diff_a_b = vector_difference( a, b )
+    diff_b_c = vector_difference( b, c )
 
     # since we want some randomness in this algorithm
     # randomly decide which vector direction we will pick
