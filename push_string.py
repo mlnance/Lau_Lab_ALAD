@@ -29,7 +29,7 @@ Output: string.dat file Images 0-n pushed along unit_push vectors
 ###########
 import sys, os
 from math import sqrt, cos, pi
-from random import choice
+from random import choice, uniform
 
 
 
@@ -95,6 +95,69 @@ def vector_magnitude( v ):
     return sqrt( 
         sum( v[ii]**2
              for ii in range( len( v ))))
+
+def normalize_vector( v ):
+    '''
+    Normalize the vector v_hat = v / |v|
+    :param v: tuple( vector )
+    :return: tuple( normalized vector )
+    '''
+    return tuple( [ v[ii] / vector_magnitude( v ) 
+                    for ii in range( len( v ) ) ] )
+
+def calculate_tangent( v1, v2, nvars ):
+    '''
+    Calculate the tangent vector between position vectors v1 and v2
+    Both v1 and v2 are described by nvars number of points
+    :param v1: tuple( position vector 1 )
+    :param v2: tuple( position vector 2 )
+    :param nvars: int( number of variables describing an image point )
+    :return: tuple( tangent vector )
+    '''
+    ## solve a system of equations to find a point in nvars-
+    ## dimensional -1 space
+    # choose nvars -1 random points between [-1, 1]
+    random_coords = [ uniform( -1, 1 ) for ii in range( nvars - 1 ) ]
+
+    # solve the system of equations by calculating the appropriate
+    # last variable
+    # ex) 3D space, nvars = 3, so we choose two variables (random_coords)
+    # ex) equation: nx( x2 - x1 ) + ny( y2 - y1 ) + nz( z2 - z1 ) = 0
+    # ex) we randomly chose nx and ny (we know (x1, y1, z1) and (x2, y2, z2))
+    # ex) so now we calculate what nz needs to be so the equation is 0
+    # so we multiply our randomly chosen random_coords[ii] variable
+    # with the difference between v2[ii] and v1[ii] for
+    # nvars-1 points of difference vectors v2 and v1
+    randomly_chosen_points = [ random_coords[ii] 
+                               * ( v2[ii] - v1[ii] ) 
+                               for ii in range( nvars - 1 ) ]
+    # with this information, we need to use the last points of
+    # v2 and v1 and a now calculated value (instead of random)
+    # to get that last portion of the system of equations
+    # to equal to zero
+    # ex) in 3D case, we need nz( z2 - z1 ) = 0 and calculate nz
+    # ex) we calculated nx( x2 - x1 ) and ny( y2 - y1 ), 
+    # ex) let's call those values X and Y, respectively and
+    # ex) call (z2 - z1) Z
+    # ex) so we would have X + Y + nz( Z ) = 0, or, 
+    # ex) nz * Z = -( X + Y )
+    # so we take the sum of what we calculated using random points
+    calc_sum = sum( randomly_chosen_points )
+    # multiply that by negative one
+    calc_sum *= -1
+    # and divide that by z2 - z1
+    # minus one because python is 0-indexed
+    last_points_diff = v2[nvars-1] - v1[nvars-1]
+    calc_last_coord = calc_sum / last_points_diff
+
+    # so our final point vector that is tangent to v2 and v1
+    # is random_coords and calc_last_coord
+    random_coords.append( calc_last_coord )
+    tangent_v = tuple( random_coords )
+
+    # normalize this vector
+    unit_normal_v = normalize_vector( tangent_v )
+    return unit_normal_v
 
 
 
@@ -211,19 +274,19 @@ nimages = len( data )
 #########################
 # DETERMINE PUSH VECTOR #
 #########################
-# calculate vectors between sets of three points
+# estimate normal vectors between sets of two points
 # skip the first and last point (start and stop)
 # start and stop points should never move
 # store the unit push vectors
 unit_push_vectors = []
-for ii in range( 1, nimages - 1 ):
+for ii in range( 1, 2 ):
+#for ii in range( 1, nimages ):
     # get points a, b, and c
     # these are successive points
     # data format: ( var1, var2, var3, ..., var_nvars )
     # v = ( var1, var2, ... )
     a = data[ii-1]
     b = data[ii]
-    c = data[ii+1]
 
     #####
     ## NOT ADJUSTED FOR USING NVARS ARGUMENT
@@ -238,11 +301,11 @@ for ii in range( 1, nimages - 1 ):
     #c = Vector( ( angle_360( c.phi ),
     #              angle_360( c.psi ) ) )
     #####
-
-    # calculate two vectors focused on point b
+    '''
+    # calculate the difference between points
+    # a and b (could b in n dimensional space)
     # each vector has nvars points to it
     diff_a_b = vector_difference( a, b )
-    diff_b_c = vector_difference( b, c )
 
     # since we want some randomness in this algorithm
     # randomly decide which vector direction we will pick
@@ -254,6 +317,12 @@ for ii in range( 1, nimages - 1 ):
     # will be down. Meaning we don't affect our algorithm
     # in a polar/directed manner. It is random and equal
     direction = choice( [ 0, 1 ] )
+    '''
+    # calculate a normal vector between points a and b
+    # this function introduces randomness
+    tangent = calculate_tangent( a, b, nvars )
+    print tangent
+    '''
 
     # calculate the normal to vectors v1 and v2
     # since dx=phi2-phi1 and dy=psi2-psi1
@@ -366,3 +435,4 @@ for ii in range( len( pushed_phi_psi_data ) ):
     print "# Image %s\n%s\n%s" %( ii, 
                                   image.phi, 
                                   image.psi )
+'''
