@@ -120,6 +120,6 @@ min_delta = int( ceil( min( total_changes ) ) )
 plt.ylim( [ 0, max_delta ] )
 plt.ylabel( "Abs( Phi,Psi Diffs b/w Cycles )" )
 diff = 50
-plt.yticks( range( 0, max_delta+diff, 30 ) )
+#plt.yticks( range( 0, max_delta+diff, 30 ) )
 plt.title( "Convergence of String %s" %string_num )
 plt.show(block=False)
