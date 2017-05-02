@@ -2,7 +2,10 @@
 __author__="morganlnance"
 
 '''
-This script needs an alad_2d_pmf.dat file and a string_100.dat file or a /path/to/dat files
+This script needs an alad_2d_pmf.dat file and a /path/to/string dat files
+
+Usage: python <script.py> pmf_file.dat /path/to/string_files path_number
+Example: python <script.py> alad_2d_pmf.dat /path/to/strings 1
 '''
 
 # open input argument file
@@ -20,13 +23,8 @@ except IndexError:
 try:
     # get the points to add from the dat file
     dat_path = sys.argv[2]
-    if os.path.isdir( dat_path ):
-        is_dir = True
-    elif os.path.isfile( dat_path ):
-        is_dir = False
-    else:
-        print "\nYou did not give me a valid .dat file or directory path."
-        print "%s is not a valid path.\n" %dat_path
+    if not os.path.isdir( dat_path ):
+        print "\nYou did not give me a valid path to a dir of string files.\n"
         sys.exit()
     # remove a trailing / if needed, for clarity later
     if dat_path.endswith( '/' ):
@@ -37,7 +35,7 @@ except IndexError:
 try:
     string_num = sys.argv[3]
 except IndexError:
-    print "\nGive me the string number for this path. For the graph.\n"
+    print "\nGive me the number for this path. For the graph.\n"
     sys.exit()
 
 
@@ -71,20 +69,14 @@ pmf_phi_psi = pmf_data_dict.keys()
 #######
 # DAT #
 #######
-# handle the dat file(s) depending if a file or directory was given
-# if a directory was given
-if is_dir is True:
-    # read in the string_<>.dat files from the given directories
-    dat_filenames = [ dat_path + '/' + dat_file
-                      for dat_file in os.listdir( dat_path )
-                      # if this is a file (not a directory or something)
-                      if os.path.isfile( dat_path + '/' + dat_file )
-                      # if it ends with .dat
-                      and dat_file.endswith( ".dat" ) ]
-    print "\nPlotting %s strings from .dat files\n" %len( dat_filenames )
-# otherwise, if a single file was given
-if is_dir is False:
-    dat_filenames = [ dat_path ]
+# read in the string_<>.dat files from the given directories
+dat_filenames = [ dat_path + '/' + dat_file
+                  for dat_file in os.listdir( dat_path )
+                  # if this is a file (not a directory or something)
+                  if os.path.isfile( dat_path + '/' + dat_file )
+                  # if it ends with .dat
+                  and dat_file.endswith( ".dat" ) ]
+print "\nPlotting %s strings from .dat files\n" %len( dat_filenames )
 
 
 #################
@@ -114,7 +106,6 @@ keys.sort()
 # round the phi,psi coordinates to the nearest value
 # that is found in the input pmf file
 # this will be the best estimate
-color_idx = np.linspace(0, 1, len(dat_filenames))
 max_energy = None
 # holds the energy of the string per string number
 energy_of_string_dict = {}
@@ -124,7 +115,7 @@ lowest_string_E = None
 lowest_string_E_key = None
 # for each dat key (should be 1 through n, 
 # it was sorted above )
-for dat_key, ii in zip( keys, color_idx ):
+for dat_key in keys:
     # dat_dict[ string_number ] = /path/to/that/string file
     dat_file = dat_dict[dat_key]
     # open and read the data from the string_<>.dat file
@@ -159,10 +150,6 @@ for dat_key, ii in zip( keys, color_idx ):
         # has been found using the closest match phi,psi
         # pair in the umbrella sampling pmf file
         energies.append( energy )
-        # collect the max_energy out of each image seen
-        # as to set a proper y-lim on the plot
-        if max_energy is None or energy > max_energy:
-            max_energy = energy
 
     # store the sum of the energies of each image (ie
     # the energy of this string) in the energy_of_string_dict
@@ -173,29 +160,31 @@ for dat_key, ii in zip( keys, color_idx ):
     if lowest_string_E is None or string_E < lowest_string_E:
         lowest_string_E = string_E
         lowest_string_E_key = dat_key
+    # also compare it to the max E seen for plotting purposes
+    if max_energy is None or string_E > max_energy:
+        max_energy = string_E
 
-    ########
-    # PLOT #
-    ########
-    # now that all energies for each phi,psi in
-    # all the images associated with this string_<>.dat file
-    # are collected, plot the data
-    # energy of image number phi,psi vs image number
-    plt.plot( range( len( energies ) ), 
-              energies, linestyle="-", 
-              color=plt.cm.rainbow(ii) )
-    plt.scatter( x=range( len( energies ) ), 
-                 y=energies, 
-                 color=plt.cm.rainbow(ii) )
+
+########
+# PLOT #
+########
+# now that all energies for each image in this string
+# file has been collected and summed, plot the data
+# energy of string number phi,psi vs string number
+y = [ energy_of_string_dict[ k ] for k in keys ]
+# line
+plt.plot( keys, y )
+# points
+plt.scatter( keys, y )
 
 
 ###############
 # FINISH PLOT #
 ###############
 # finish the plot
-plt.xlim( [ 0, len( dat_phi_psi ) ] )
-plt.xlabel( "Image Number" )
-plt.ylim( [ 0, round( max_energy ) + 1 ] )
+plt.xlim( [ 0, len( keys ) ] )
+plt.xlabel( "String Number" )
+#plt.ylim( [ 0, round( max_energy ) + 1 ] )
 plt.ylabel( "Sum(Phi,Psi) Energy" )
-plt.title( "String %s" %string_num )
+plt.title( "Path %s" %string_num )
 plt.show(block=False)
