@@ -1,25 +1,26 @@
 #!/usr/bin/python
 __author__="morganlnance"
 
+
+## period used for simulated annealing function
+period = 25
+
 '''
 Usage: python <script>.py string_cycle#.dat nvars cycle_number
 Arguments: string_cycle#.dat (/path/to/the string.dat file)
            nvars             (the number of variables defining one image)
            cycle_number      (the number of the current cycle of the algorithm)
 
-Using a string_<>.dat file, calculate the normal vector using three points.
-Points a, b, c
+Using a string_<>.dat file, calculate the normal vector using two images.
+Points a and b
 Calculate vector from a to b, v1
-Calculate normal vector to v1, n1
-Calculate vector from c to b, v2
-Calculate normal vector to v2, n2
-Add vectors u1 and u2, push
-Normalize the push vector, unit_push
-Collect all unit_push vectors for each image
+Calculate tangent vector to v1, tangent_push
+Normalize the tangent_push vector
+Collect all tangent_push vectors for each image, except start and stop
 Adjust all unit_push vectors according to a multiplier and 
 a simulated annealing calculation
-Then
-Move all images along the adjusted unit_push vectors
+Then, iteratively, 
+Add normalized tangent_push to the position vector of the corresponding image
 
 Output: string.dat file Images 0-n pushed along unit_push vectors
 '''
@@ -70,16 +71,32 @@ def angle_180( angle ):
     while angle < -180:
         angle += 360
     return angle
-        
-def vector_difference( v1, v2 ):
+
+def add_vectors( v1, v2 ):
     '''
-    Get the difference between vector v1 and vector v2
-    :param v1: tuple( 1p1, 1p2, ..., 1pn )
-    :param v2: tuple( 2p1, 2p2, ..., 2pn )
-    :return: tuple( 2p1 - 1p1, 2p2 - 1p2, ... )
+    Add components of v1 and v2
+    :param v1: tuple( vector 1 )
+    :param v2: tuple( vector 2 )
+    :return: tuple( v1 + v2 )
+    '''
+    # ensure the vectors are the same size
+    if len( v1 ) != len( v2 ):
+        print "\nThe vectors you gave me for calculating distance do not have the same number of points.\n"
+        sys.exit()
+    # add the vectors together component-wise
+    v_len = len( v1 )
+    return tuple( [ v1[ii] + v2[ii] 
+                    for ii in range( v_len ) ] )
+        
+def subtract_vectors( v1, v2 ):
+    '''
+    Subtract components of v1 from v2
+    :param v1: tuple( vector 1 )
+    :param v2: tuple( vector 2 )
+    :return: tuple( v2 - v1 )
     '''
     # ensure the vectors have the same number of points
-    if not len( v1 ) == len( v2 ):
+    if len( v1 ) != len( v2 ):
         print "\nThe vectors you gave me for calculating distance do not have the same number of points.\n"
         sys.exit()
     # calculate distance
@@ -117,7 +134,14 @@ def calculate_tangent( v1, v2, nvars ):
     ## solve a system of equations to find a point in nvars-
     ## dimensional -1 space
     # choose nvars -1 random points between [-1, 1]
-    random_coords = [ uniform( -1, 1 ) for ii in range( nvars - 1 ) ]
+    from random import sample
+    choices = range( nvars )
+    random_picks = sample( choices, nvars-1 )
+    calc_pt = list( (set(choices) | set(random_picks)) - 
+                    (set(choices) & set(random_picks)) )[0]
+    random_coords = [ uniform( -1, 1 ) for ii in range( nvars ) ]
+
+    #random_coords = [ uniform( -1, 1 ) for ii in range( nvars - 1 ) ] keep
 
     # solve the system of equations by calculating the appropriate
     # last variable
@@ -128,9 +152,10 @@ def calculate_tangent( v1, v2, nvars ):
     # so we multiply our randomly chosen random_coords[ii] variable
     # with the difference between v2[ii] and v1[ii] for
     # nvars-1 points of difference vectors v2 and v1
-    randomly_chosen_points = [ random_coords[ii] 
-                               * ( v2[ii] - v1[ii] ) 
-                               for ii in range( nvars - 1 ) ]
+    randomly_chosen_points = [ random_coords[ii] * ( v2[ii] - v1[ii] ) 
+                               for ii in random_picks ]
+#    randomly_chosen_points = [ random_coords[ii] * ( v2[ii] - v1[ii] ) keep
+#                               for ii in range( nvars - 1 ) ]
     # with this information, we need to use the last points of
     # v2 and v1 and a now calculated value (instead of random)
     # to get that last portion of the system of equations
@@ -140,14 +165,15 @@ def calculate_tangent( v1, v2, nvars ):
     # ex) let's call those values X and Y, respectively and
     # ex) call (z2 - z1) Z
     # ex) so we would have X + Y + nz( Z ) = 0, or, 
-    # ex) nz * Z = -( X + Y )
+    # ex) nz = (-( X + Y )) / Z
     # so we take the sum of what we calculated using random points
     calc_sum = sum( randomly_chosen_points )
     # multiply that by negative one
     calc_sum *= -1
     # and divide that by z2 - z1
     # minus one because python is 0-indexed
-    last_points_diff = v2[nvars-1] - v1[nvars-1]
+    last_points_diff = v2[calc_pt] - v1[calc_pt]
+    #last_points_diff = v2[nvars-1] - v1[nvars-1] keep
     calc_last_coord = calc_sum / last_points_diff
 
     # so our final point vector that is tangent to v2 and v1
@@ -155,9 +181,9 @@ def calculate_tangent( v1, v2, nvars ):
     random_coords.append( calc_last_coord )
     tangent_v = tuple( random_coords )
 
-    # normalize this vector
-    unit_normal_v = normalize_vector( tangent_v )
-    return unit_normal_v
+    # normalize this tangent vector
+    normalized_tangent_v = normalize_vector( tangent_v )
+    return normalized_tangent_v
 
 
 
@@ -222,9 +248,9 @@ except IOError:
         "Is there something wrong with %s ?\n" %string_file
     sys.exit()
 # parse the file, storing vars info
-all_phi_psi_data = [ float( line.strip() ) # phi and psi
-                     for line in lines
-                     if not line.startswith( '#' ) ] # if not '# Image n'
+all_images_raw = [ float( line.strip() )
+                   for line in lines
+                   if not line.startswith( '#' ) ] # if not '# Image n'
 # string_cycle#.dat file looks like
 '''
 # Image n
@@ -246,9 +272,9 @@ length
 ## ex) alad project described by phi,psi
 ## where phi came first then psi after each
 ## '# Image n' line
-# so loop over the data according to how
+# so loop over the all_images_raw data according to how
 # many variables describe the data (nvars)
-all_data = []
+all_images = []
 for ii in range( nvars ):
     # each var that describes the image repeats in
     # a predictable manner
@@ -259,15 +285,15 @@ for ii in range( nvars ):
     # reminder: list[start_at:end_before:skip]
     # so start_at should iterate from 0 to nvars
     # and nvars should be skipped each time
-    all_data.append( all_phi_psi_data[ii::nvars] )
+    all_images.append( all_images_raw[ii::nvars] )
 # unpack and organize the data appropriately
 # each tuple in the data list are the variables associated
 # with that particular image number (by index)
-data = zip( *all_data )
+all_images = zip( *all_images )
 
 # the number of images is the number of
 # data point tuples from the file
-nimages = len( data )
+nimages = len( all_images )
 
 
 
@@ -277,16 +303,16 @@ nimages = len( data )
 # estimate normal vectors between sets of two points
 # skip the first and last point (start and stop)
 # start and stop points should never move
-# store the unit push vectors
-unit_push_vectors = []
+# store the tangent push vectors
+tangent_push_vectors = []
 for ii in range( 1, 2 ):
-#for ii in range( 1, nimages ):
+#for ii in range( 1, nimages - 1 ):
     # get points a, b, and c
     # these are successive points
     # data format: ( var1, var2, var3, ..., var_nvars )
     # v = ( var1, var2, ... )
-    a = data[ii-1]
-    b = data[ii]
+    a = all_images[ii-1]
+    b = all_images[ii]
 
     #####
     ## NOT ADJUSTED FOR USING NVARS ARGUMENT
@@ -301,60 +327,17 @@ for ii in range( 1, 2 ):
     #c = Vector( ( angle_360( c.phi ),
     #              angle_360( c.psi ) ) )
     #####
-    '''
-    # calculate the difference between points
-    # a and b (could b in n dimensional space)
-    # each vector has nvars points to it
-    diff_a_b = vector_difference( a, b )
 
-    # since we want some randomness in this algorithm
-    # randomly decide which vector direction we will pick
-    # there will be two directions for each normal vector
-    # so pick the first or second direction calculated
-    # if a sufficient number of images are in the string,
-    # then the average "push" of the normal vectors sums
-    # to zero because about half will be up and half
-    # will be down. Meaning we don't affect our algorithm
-    # in a polar/directed manner. It is random and equal
-    direction = choice( [ 0, 1 ] )
-    '''
     # calculate a normal vector between points a and b
-    # this function introduces randomness
-    tangent = calculate_tangent( a, b, nvars )
-    print tangent
-    '''
+    # this function introduces randomness in direction and
+    # normalizes the returned tangent_push vector
+    # the tangent_push vector will eventually be added to point b
+    tangent_push = calculate_tangent( a, b, nvars )
 
-    # calculate the normal to vectors v1 and v2
-    # since dx=phi2-phi1 and dy=psi2-psi1
-    # then the normals are (-dy, dx) and (dy, -dx)
-    # select the vector by using a randomly-selected direction
-    # both normals should point in the same direction
-    # otherwise they cancel each other out
-    n1 = Vector( [ ( -dpsi1, dphi1 ), 
-                   ( dpsi1, -dphi1 ) ][ direction ] )
-    n2 = Vector( [ ( -dpsi2, dphi2 ), 
-                   ( dpsi2, -dphi2 ) ][ direction ] )
-
-    # add the normal vectors together to get the push vector
-    # (it should be somewhere in between the two vectors)
-    # add vectors component-wise
-    # push = ( n1.phi + n2.phi, n1.psi + n1.phi )
-    push = Vector( ( n1.phi + n2.phi, 
-                     n1.psi + n2.psi ) )
-
-    ## normalize the push vector to a unit vector: u = v / |v|
-    ## then adjust the unit vector in a simulated annealing approach
-    # determine the magnitude of the push vector
-    push_mag = vector_magnitude( push.vector )
-    # unit_push = ( phi, psi ) from u = v / |v|
-    unit_push = Vector( tuple( 
-            [ push.vector[jj] / push_mag
-              for jj in range( len( push.vector )) ] ))
-    # adjust the unit_push vector according to a simulated
+    # adjust the tangent_push vector according to a simulated
     # annealing equation as defined in a helper function
     # period remains constant (currently an arbitrary value)
     # chosen with the intent to use 100 cycles
-    period = 25
     # cycle depends on which cycle number the algorithm is on
     # (1/2) * cos( 2*pi * (cycle/period) - pi ) + 1/2
     sim_anneal = simulated_annealing( cycle_num, period )
@@ -370,32 +353,36 @@ for ii in range( 1, 2 ):
     # top of the simulated annealing cosine curve
     # the simulated annealing function is a periodic one
     # with multiple mins and maxs and heating and cooling cycles
-    unit_push = Vector( tuple( 
-            [ unit_push.vector[jj] * sim_anneal * multiplier 
-              for jj in range( len( unit_push.vector ) ) ] ) )
-    unit_push_vectors.append( unit_push )
+    tangent_push = tuple( 
+            [ tangent_push[jj] * sim_anneal * multiplier 
+              for jj in range( nvars ) ] )
+    tangent_push_vectors.append( tangent_push )
+    print ','.join( [ str(tangent_push[0]+b[0]), str(tangent_push[1]+b[1]), str(tangent_push[2]+b[2]) ] )
 
 
 
 ##################
 # PUSHING POINTS #
 ##################
+# now that all the tangent_push vectors have been
+# calculated for images 1 to nimages-1, 
 # create a data holder for the pushed points
 # add the first point (which is unmoved) to the list
-# the last point will be added at the end of the loop
-pushed_phi_psi_data = []
-pushed_phi_psi_data.append( Vector( phi_psi_data[0] ) )
-# now that unit_push_vectors have been collected
-# move each phi,psi image along its unit_push vector
+# then the last point will be added at the end of this loop
+pushed_images = []
+pushed_images.append( all_images[0] )
+# now that tangent_push_vectors have been collected
+# move each phi,psi image along its tangent_push vector
 # there is either no push, max push, or in between
-for ii, unit_push in zip( range( 1, nimages - 1 ), 
-                     unit_push_vectors ):
-    # grab the image to move along the unit_push vector
-    point = Vector( phi_psi_data[ii] )
+for ii, tangent_push in zip( range( 1, nimages - 1 ), 
+                     tangent_push_vectors ):
+    # grab the image to move along the tangent_push vector
+    point = all_images[ii]
 
     #####
+    ## NOT ADJUSTED FOR USING NVARS ARGUMENT
     ## only for strings whose phi,psi cross barrier
-    # our unit unit_push vectors were calculated for images
+    # our unit tangent_push vectors were calculated for images
     # between phi,psi values of 0,360
     # so convert the image phi,psi to 0,360
     # this is to fix periodicity problems
@@ -403,12 +390,12 @@ for ii, unit_push in zip( range( 1, nimages - 1 ),
     #                  angle_360( point.psi ) ) )
     #####
 
-    # move the image according to its unit_push vector
-    # add it component wise (phi1 + phi2, psi1 + psi2)
-    pushed_point = Vector( ( point.phi + unit_push.phi, 
-                             point.psi + unit_push.psi ) )
+    # move the image according to its tangent_push vector
+    # adding them component wise
+    pushed_point = add_vectors( point, tangent_push )
 
     #####
+    ## NOT ADJUSTED FOR USING NVARS ARGUMENT
     ## only for strings whose phi,psi cross barrier
     # now move the pushed point back between -180 and 180
     # phi,psi point was adjusted to 0,360 previously
@@ -417,22 +404,23 @@ for ii, unit_push in zip( range( 1, nimages - 1 ),
     #                         angle_180( pushed_point.psi ) ) )
     #####
 
-    # add pushed phi,psi point to the data list
-    pushed_phi_psi_data.append( pushed_point )
-# add the last point (which is unmoved) to the list
-pushed_phi_psi_data.append( Vector( phi_psi_data[-1] ) )
+    # add pushed image point to the pushed_images list
+    pushed_images.append( pushed_point )
+# add the last image point (which is also unmoved) to the list
+pushed_images.append( all_images[-1] )
 
 
 
 ###################
 # CREATE DAT FILE #
 ###################
-# convert the pushed_phi_psi_data into a .dat file
-for ii in range( len( pushed_phi_psi_data ) ):
+# convert the pushed_images into a .dat file
+for ii in range( len( pushed_images ) ):
     # pull out the image
-    image = pushed_phi_psi_data[ii]
+    image = pushed_images[ii]
     # print the format for this image
-    print "# Image %s\n%s\n%s" %( ii, 
-                                  image.phi, 
-                                  image.psi )
-'''
+#    print "# Images %s" %ii
+    # print all the data describing this image
+    # len( image ) should == nvars
+#    for jj in image:
+#        print jj
