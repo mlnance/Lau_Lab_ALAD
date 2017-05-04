@@ -30,7 +30,8 @@ Output: string.dat file Images 0-n pushed along unit_push vectors
 ###########
 import sys, os
 from math import sqrt, cos, pi
-from random import choice, uniform
+from random import choice, sample, uniform
+import numpy as np
 
 
 
@@ -132,20 +133,33 @@ def calculate_tangent( v1, v2, nvars ):
     :return: tuple( tangent vector )
     '''
     ## solve a system of equations to find a point in nvars-
-    ## dimensional -1 space
-    # choose nvars -1 random points between [-1, 1]
-    from random import sample
+    ## dimensional - 1 space and
+    ## randomly choose nvars-1 random points between [-1, 1]
+    # we have a range of choices from 0 to nvars
     choices = range( nvars )
+    # pick nvars-1 points of these choices
     random_picks = sample( choices, nvars-1 )
-    calc_pt = list( (set(choices) | set(random_picks)) - 
-                    (set(choices) & set(random_picks)) )[0]
-    random_coords = [ uniform( -1, 1 ) for ii in range( nvars ) ]
+    # find the point that was not randomly picked
+    # this is the one we will need to calculate
+    # using the random_picks points that are set to values
+    # subtracting the set of random_picks (size nvars-1)
+    # from the set of choices (size nvars), will leave
+    # the value in choices that is not present in random_picks
+    # taking the first element because the difference between
+    # set( choices ) and set( random_picks ) should only be
+    # one value
+    # ex) choices = [ 0, 1, 2 ]
+    # ex) random_picks = [ 0, 2 ]
+    # ex) --> calc_pt = 1
+    calc_pt = list( set( choices ) - set( random_picks ) )[0]
 
-    #random_coords = [ uniform( -1, 1 ) for ii in range( nvars - 1 ) ] keep
+    # we need nvars number of random values between -1 and 1
+    # so that the can be parsed according to random_picks
+    random_coords = [ uniform( -1, 1 ) for ii in range( nvars ) ]
 
     # solve the system of equations by calculating the appropriate
     # last variable
-    # ex) 3D space, nvars = 3, so we choose two variables (random_coords)
+    # ex) 3D space, nvars = 3, so we randomly chose two variables (random_coords)
     # ex) equation: nx( x2 - x1 ) + ny( y2 - y1 ) + nz( z2 - z1 ) = 0
     # ex) we randomly chose nx and ny (we know (x1, y1, z1) and (x2, y2, z2))
     # ex) so now we calculate what nz needs to be so the equation is 0
@@ -154,8 +168,12 @@ def calculate_tangent( v1, v2, nvars ):
     # nvars-1 points of difference vectors v2 and v1
     randomly_chosen_points = [ random_coords[ii] * ( v2[ii] - v1[ii] ) 
                                for ii in random_picks ]
-#    randomly_chosen_points = [ random_coords[ii] * ( v2[ii] - v1[ii] ) keep
-#                               for ii in range( nvars - 1 ) ]
+    # random_coords contained nvars values between -1 and 1, 
+    # but we need only nvars-1, so adjust the contents of this list
+    # ensuring that you are only picking the values that were
+    # selected in random_picks
+    random_coords = [ random_coords[ii] for ii in random_picks ]
+
     # with this information, we need to use the last points of
     # v2 and v1 and a now calculated value (instead of random)
     # to get that last portion of the system of equations
@@ -171,14 +189,39 @@ def calculate_tangent( v1, v2, nvars ):
     # multiply that by negative one
     calc_sum *= -1
     # and divide that by z2 - z1
-    # minus one because python is 0-indexed
+    # which in this case is the left over point
+    # the one that was not randomly selected and assigned
     last_points_diff = v2[calc_pt] - v1[calc_pt]
-    #last_points_diff = v2[nvars-1] - v1[nvars-1] keep
     calc_last_coord = calc_sum / last_points_diff
 
     # so our final point vector that is tangent to v2 and v1
     # is random_coords and calc_last_coord
+    # add this calc_last_coord to the list of random_coords
+    # so that random_coords now has nvars values (instead of nvars-1)
+    # and the random_coords have the selected values and calculated
+    # values in the same order that was established
     random_coords.append( calc_last_coord )
+    # we chose randomly the points we were going to selected values
+    # for and the last point we would calculate, which means that
+    # the random_coords data holder of nvars values is not necessarily
+    # in the same order as the actual data given in the input vectors
+    # so start with the random_picks, they are the first nvars-1 points
+    unordered_order = random_picks
+    # then add the last point which was the that needed to be calculated
+    unordered_order.append( calc_pt )
+    # sort this list based on the indices
+    # i.e. get the list of indices that would put unordered_order
+    # in a sorted order 
+    # ex) unordered_order = [ 2, 0, 1 ]
+    # ex) np.argsort( unordered_order ) --> [ 1, 2, 0 ]
+    # ex) giving order = [ 0, 1, 2 ]
+    order = list(np.argsort( unordered_order ))
+    # now put the coord values that were randomly selected
+    # and calculated (random_coords) in the correct order
+    # because prior to this, random_coords was in the same
+    # order as random_picks with calc_pt being last
+    random_coords = [ random_coords[ii] for ii in order ]
+    # finally, turn this into a tuple
     tangent_v = tuple( random_coords )
 
     # normalize this tangent vector
@@ -353,9 +396,9 @@ for ii in range( 1, 2 ):
     # top of the simulated annealing cosine curve
     # the simulated annealing function is a periodic one
     # with multiple mins and maxs and heating and cooling cycles
-    tangent_push = tuple( 
-            [ tangent_push[jj] * sim_anneal * multiplier 
-              for jj in range( nvars ) ] )
+    #tangent_push = tuple( 
+    #        [ tangent_push[jj] * sim_anneal * multiplier 
+    #          for jj in range( nvars ) ] )
     tangent_push_vectors.append( tangent_push )
     print ','.join( [ str(tangent_push[0]+b[0]), str(tangent_push[1]+b[1]), str(tangent_push[2]+b[2]) ] )
 
