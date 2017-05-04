@@ -1,0 +1,213 @@
+*
+
+!  run_string.inp
+!
+!    Usage: c361b1_large image=@image cycle=@cycle isee1=@isee1 isee2=@isee2 
+!           isee3=@isee3 isee4=@isee4 < run_string.inp > img_@image_cycle_@cycle.out
+!    
+!    Description: Runs the string method with swarms of trajectories as 
+!                 described in Maragliano et al. The collective variables here
+!                 are taken to be (x, y, z) positions of each CA on the protein
+!                 and ligand.
+!
+!                 run_string.inp is called by manage_image.py, a python wrapper
+!                 for each image.                  
+!
+!                 Image specific restraints are computed using gen-img-stream.py
+!                 and called here in img_@img_cycle_@cycle.str and used for
+!                 pushing to the target in string_@cycle.dat
+!
+!                 The swarms of trajectories are written out to
+!                 img_@image_cycle_@cycle.swm@swarm; the pushed col vars
+!                 are written to img_@img_cycle_@cycle_pushed.var for analysis.
+!                 
+!    Input: img_@image_cycle_@prev.cor - the initial coordinates used for the 
+!                                        the image, taken from the previous
+!                                        iteration.  
+!           img_@image_cycle_@prev.str - the restraint stream file containing
+!                                        the col vars from the string target.
+!
+!    Output: img_@image_cycle_@cycle.cor - the coor file after pushing.
+!            img_@image_cycle_@cycle_pushed.var - the col vars of the pushed
+!                                                 system for further analysis.
+!            img_@image_cycle_@cycle.swm@swarm - the swarm of trajectory files
+
+
+!----------------!
+! Initialization !
+!----------------!
+
+set toppar  = /home/mnance/alad/apps/charmm/c34a1/toppar
+set stream  = /home/mnance/alad/apps/charmm/stream
+set tpextra = /home/mnance/alad/apps/charmm/toppar_extra
+
+set temp    = 0
+calc prev   = @cycle - 1
+
+open read card unit 3 name @toppar/top_all27_prot_lipid.rtf
+!open read card unit 3 name @toppar/top_all36_prot_lipid.rtf
+read rtf unit 3 card
+close unit 3
+
+open read card unit 3 name @toppar/par_all27_prot_lipid.prm
+!open read card unit 3 name @toppar/par_all36_prot_lipid.prm
+read para unit 3 card
+close unit 3
+
+!-------------------------------!
+! Generate the solvated protein !
+!-------------------------------!
+! NOTE : This generates a .psf
+
+read sequence ALAD 1
+generate ALAD setup
+
+! Read image coords
+open unit 1 read card name img_@image_cycle_@prev.cor
+read coor card unit 1
+close unit 1
+
+!-----------------------!
+! Setup some restraints !
+!-----------------------!
+
+! Prevent translation of peptide by restraining COM
+cons hmcm force 0.25 refx 0.0 refy 0.0 refz 0.0 select segid ALAD end
+
+!-------------------------!
+! non-bonded interactions !
+!-------------------------!
+
+set cutnb  99.0  ! cutnb
+set ctonnb 97.0  ! ctonnb
+set ctofnb 98.0  ! ctofnb
+set eatom atom
+set etrun switch
+set vatom vatom
+set vtrun vswitch
+
+NBOND cdie eps 1.0 -
+@eatom @etrun @vatom @vtrun cutnb @cutnb ctonnb @ctonnb ctofnb @ctofnb
+
+shake bonh parameter
+
+!--------------------------------------!
+! Initial push to target in string.dat !
+!--------------------------------------!
+
+! Col Vars - the (x, y, z) coordinate pairs of all CA.
+stream img_@image_cycle_@prev.str
+
+! Push system to target
+scalar fbeta set 5.0 select (.not. type H*) end
+
+! nstep 2000
+DYNAMICS LEAP LANGEVIN -
+  start          nstep     5000  timestep 0.001  -
+  inbfrq     -1  imgfrq      -1  ihbfrq       0  ilbfrq     0   ihtfrq   0    iprfrq    500  -
+  tbath   @temp  firstt   @temp  finalt   @temp  teminc     0.0 rbuffer  0.0  - !echeck    -1.0  -
+  ntrfrq    500  tstruc   @temp  iseed   @isee1  @isee2  @isee3  @isee4  -
+  nprint    500  - 
+  IASORS 0 IASVEL 1 ISCVEL 0 ICHECW 0 TWINDH 0.0 TWINDL 0.0
+
+open write card unit 1 name img_@image_cycle_@cycle.cor
+write coor card unit 1
+
+! PHI angle
+quick select type CLP end -
+      select type NL  end -
+      select type CA  end -
+      select type CRP end
+set cv1 ?phi
+
+! PSI angle
+quick select type NL  end -
+      select type CA  end -
+      select type CRP end -
+      select type NR end
+set cv2 ?phi
+
+open write unit 25 form name img_@image_cycle_@cycle_pushed.var
+write title unit 25
+*@cv1
+*@cv2
+
+!-------------------------------------------------!
+! Run and write coordinates for initiating swarms !
+!-------------------------------------------------!
+
+incr isee1 by @isee2
+incr isee2 by @isee3
+incr isee3 by @isee4
+incr isee4 by @isee1
+
+open unit 23 unform write name img_@image_cycle_@cycle.dcd 
+
+! Restrained dynamics
+! nstep 500
+DYNAMICS LEAP LANGEVIN -
+  start          nstep     5000  timestep 0.002  -
+  inbfrq     -1  imgfrq      -1  ihbfrq       0  ilbfrq     0    ihtfrq   0    iprfrq    500  -
+  tbath   @temp  firstt   @temp  finalt   @temp  teminc     0.0  rbuffer  0.0  - !echeck    -1.0  -
+  ntrfrq    500  tstruc   @temp  iseed   @isee1  @isee2  @isee3  @isee4  -
+  nprint    500  nsavc       50  iuncrd      23  -
+  IASORS 0 IASVEL 1 ISCVEL 0 ICHECW 0 TWINDH 0.0 TWINDL 0.0
+
+mmfp
+GEO reset
+end
+
+!---------------------------------------------!
+! Launch the swarms of trajectories (free MD) !
+!---------------------------------------------!
+
+incr isee1 by @isee3
+incr isee2 by @isee4
+incr isee3 by @isee1
+incr isee4 by @isee2
+
+OPEN READ UNIT 24 UNFORM NAME img_@image_cycle_@cycle.dcd
+TRAJECTORY FIRSTU 24 NUNIT 1
+SET I = 0
+LABEL LOOP
+  TRAJ READ 
+
+  ! Do a short trajectory for this configuration
+  DYNAMICS LEAP LANGEVIN -
+    start          nstep       10  timestep 0.002  -
+    inbfrq     -1  imgfrq      -1  ihbfrq       0  ilbfrq     0   ihtfrq   0  iprfrq   1000  -
+    tbath   @temp  firstt   @temp  finalt   @temp  teminc     0.0 rbuffer  0.0  - !echeck    -1.0  -
+    ntrfrq   1000  tstruc   @temp  iseed   @isee1  @isee2  @isee3  @isee4 -
+    nprint   1000  -
+    IASORS 0 IASVEL 1 ISCVEL 0 ICHECW 0 TWINDH 0.0 TWINDL 0.0
+
+  ! PHI angle
+  quick select type CLP end -
+        select type NL  end -
+        select type CA  end -
+        select type CRP end
+  set cv1 ?phi
+
+  ! PSI angle
+  quick select type NL  end -
+        select type CA  end -
+        select type CRP end -
+        select type NR end
+  set cv2 ?phi
+
+  ! Write out the swarms
+  open write unit 55 form name img_@image_cycle_@cycle.swm@I
+  write title unit 55
+*@cv1
+*@cv2
+
+  INCR I BY 1
+  incr isee1 by @isee2
+  incr isee2 by @isee3
+  incr isee3 by @isee4
+  incr isee4 by @isee1
+
+IF I LT ?NFILE GOTO LOOP
+
+STOP
+
