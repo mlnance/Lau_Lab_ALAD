@@ -348,8 +348,7 @@ nimages = len( all_images )
 # start and stop points should never move
 # store the tangent push vectors
 tangent_push_vectors = []
-for ii in range( 1, 2 ):
-#for ii in range( 1, nimages - 1 ):
+for ii in range( 1, nimages - 1 ):
     # get points a, b, and c
     # these are successive points
     # data format: ( var1, var2, var3, ..., var_nvars )
@@ -396,11 +395,12 @@ for ii in range( 1, 2 ):
     # top of the simulated annealing cosine curve
     # the simulated annealing function is a periodic one
     # with multiple mins and maxs and heating and cooling cycles
-    #tangent_push = tuple( 
-    #        [ tangent_push[jj] * sim_anneal * multiplier 
-    #          for jj in range( nvars ) ] )
+    tangent_push = tuple( 
+            [ tangent_push[jj] * sim_anneal * multiplier 
+              for jj in range( nvars ) ] )
     tangent_push_vectors.append( tangent_push )
-    print ','.join( [ str(tangent_push[0]+b[0]), str(tangent_push[1]+b[1]), str(tangent_push[2]+b[2]) ] )
+    # debug purposes
+    #print ','.join( [ str(tangent_push[0]+b[0]), str(tangent_push[1]+b[1]), str(tangent_push[2]+b[2]) ] )
 
 
 
@@ -462,8 +462,8 @@ for ii in range( len( pushed_images ) ):
     # pull out the image
     image = pushed_images[ii]
     # print the format for this image
-#    print "# Images %s" %ii
+    print "# Images %s" %ii
     # print all the data describing this image
     # len( image ) should == nvars
-#    for jj in image:
-#        print jj
+    for jj in image:
+        print jj
