@@ -3,7 +3,7 @@ __author__="morganlnance"
 
 
 '''
-Usage: python <script>.py string_cycle#.dat nvars cycle_number
+Usage: python <script>.py string_cycle#.dat nvars
 Arguments: string_cycle#.dat (/path/to/the string.dat file)
            nvars             (the number of variables defining one image)
 
