@@ -71,24 +71,17 @@ for i in range(nimg_old-1):
   for j in range(nvar):
     
     if j < ang_var:
-      # the differences between image i+1 and image i
       diff_v[j] = pts[i+1, j] - pts[i, j]
     else:
       diff_v[j] = adiff( pts[i+1,j] ,pts[i,j] ) 
 
-  # magnitude of the difference vector
-  # equivalent to math.sqrt(sum(i**2 for i in diff_v))
   dist = np.linalg.norm(diff_v)
 
   grad[i, :] = diff_v / dist
-  # the distance between image i and image i+1 of the whole string
   slength[i+1] = slength[i] + dist
 
 ## -------------------- Reparametrize the string ------------------- ##
 
-# the average distance between each image in the string
-# slength[-1] is the total length of the string
-# there are nimg - 1 lines connecting nimg images
 img_dist   = slength[-1] / float(nimg - 1)
 new_string = np.zeros(nimg * nvar)
 new_string.resize( nimg, nvar )
@@ -123,13 +116,6 @@ for i in range(nimg):
 #    print 'START_PT = %s, NEW_PT = %s \n' %(start_pt, new_pt)
 
   else:
-    # the link point is the point that is a good starting point to
-    # use to make a new point along the string in an ideal fashion
-    # it is the point chosen to then move along its gradient to
-    # the next point
-    # it's found by having the actual point of a string (meaning
-    # how far you've gone down the string distance wise) and comparing
-    # it to how far an ideal string would be by this same image point
     link = np.searchsorted(slength, tot_dist) - 1    # nth link of string
 
 #    print tot_dist
@@ -137,23 +123,9 @@ for i in range(nimg):
    
     # Compute the new points
     start_pt = pts[link]
-    # gradient is the slope connecting the link point
-    # and the point following the link
-    # this is the line on which you would take the link point
-    # move it along the gradient to some point where
-    # the ideal point would fall
     gradient  = grad[link, :]
-    # this is how far you need to move the link point along the
-    # gradient to get the point of the string on which the ideal
-    # image of this image number would sit
     proj_dist = tot_dist - slength[link]
 
-    # your new point is the starting point that is projected along
-    # the gradient connecting this point and the following point in
-    # the string as far as determined by the proj_dist
-    # this ensures your new string looks like your old string,
-    # but the images (points) along the string are separated in
-    # an equidistant fashion (the avg dist between the starting images)
     new_pt = project(start_pt, gradient, proj_dist)
 
 #    print 'START_PT = %s   PROJ DIST = %s   GRADIENT = %s' %(start_pt, proj_dist, gradient)
